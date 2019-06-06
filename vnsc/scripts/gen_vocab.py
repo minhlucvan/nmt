@@ -55,6 +55,13 @@ parser.add_argument(
     default=" ",
     help="Delimiter character for tokenizing. Use \" \" and \"\" for word and char level respectively."
 )
+parser.add_argument(
+    "--word_count",
+    dest="word_count",
+    type=bool,
+    default=False,
+    help="whether or not endable the word count"
+)
 args = parser.parse_args()
 
 # Counter for all tokens in the vocabulary
@@ -91,4 +98,8 @@ if args.max_vocab_size is not None:
   word_with_counts = word_with_counts[:args.max_vocab_size]
 
 for word, count in word_with_counts:
-  print("{}\t{}".format(word, count))
+    tpl = "{}\t{}"
+    if not args.word_count:
+        tpl = "{}"
+
+    print(tpl.format(word, count))
