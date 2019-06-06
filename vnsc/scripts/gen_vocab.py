@@ -45,14 +45,14 @@ parser.add_argument(
 parser.add_argument(
     "infile",
     nargs="?",
-    type=argparse.FileType("r"),
-    default=sys.stdin,
+    type=str,
+    default='',
     help="Input tokenized text file to be processed.")
 parser.add_argument(
     "outfile",
     nargs="?",
-    type=argparse.FileType("wb"),
-    default=sys.stdout,
+    type=str,
+    default='',
     help="Input tokenized text file to be processed.")
 parser.add_argument(
     "--delimiter",
@@ -71,44 +71,45 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Counter for all tokens in the vocabulary
-cnt = collections.Counter()
+with open(args.infile, 'r', encoding='utf-8') as infile, open(args.outfile, 'wb') as outfile:
+    cnt = collections.Counter()
 
-for line in args.infile:
-  if args.downcase:
-    line = line.lower()
-  if args.delimiter == "":
-    tokens = list(line.strip())
-  else:
-    tokens = line.strip().split(args.delimiter)
-  tokens = [_ for _ in tokens if len(_) > 0]
-  cnt.update(tokens)
+    for line in infile:
+      if args.downcase:
+        line = line.lower()
+      if args.delimiter == "":
+        tokens = list(line.strip())
+      else:
+        tokens = line.strip().split(args.delimiter)
+      tokens = [_ for _ in tokens if len(_) > 0]
+      cnt.update(tokens)
 
-logging.info("Found %d unique tokens in the vocabulary.", len(cnt))
+    logging.info("Found %d unique tokens in the vocabulary.", len(cnt))
 
-# Filter tokens below the frequency threshold
-if args.min_frequency > 0:
-  filtered_tokens = [(w, c) for w, c in cnt.most_common()
-                     if c > args.min_frequency]
-  cnt = collections.Counter(dict(filtered_tokens))
+    # Filter tokens below the frequency threshold
+    if args.min_frequency > 0:
+      filtered_tokens = [(w, c) for w, c in cnt.most_common()
+                         if c > args.min_frequency]
+      cnt = collections.Counter(dict(filtered_tokens))
 
-logging.info("Found %d unique tokens with frequency > %d.",
-             len(cnt), args.min_frequency)
+    logging.info("Found %d unique tokens with frequency > %d.",
+                 len(cnt), args.min_frequency)
 
-# Sort tokens by 1. frequency 2. lexically to break ties
-word_with_counts = cnt.most_common()
-word_with_counts = sorted(
-    word_with_counts, key=lambda x: (x[1], x[0]), reverse=True)
+    # Sort tokens by 1. frequency 2. lexically to break ties
+    word_with_counts = cnt.most_common()
+    word_with_counts = sorted(
+        word_with_counts, key=lambda x: (x[1], x[0]), reverse=True)
 
-# Take only max-vocab
-if args.max_vocab_size is not None:
-  word_with_counts = word_with_counts[:args.max_vocab_size]
+    # Take only max-vocab
+    if args.max_vocab_size is not None:
+      word_with_counts = word_with_counts[:args.max_vocab_size]
 
-for word, count in word_with_counts:
-    tpl = "{}\t{}"
-    if not args.word_count:
-        tpl = "{}"
+    for word, count in word_with_counts:
+        tpl = "{}\t{}"
+        if not args.word_count:
+            tpl = "{}"
 
-    args.outfile.write((tpl + '\n').format(word, count).encode('utf-8'))
+        outfile.write((tpl + '\n').format(word, count).encode('utf-8'))
 
-args.infile.close()
-args.outfile.close()
+    infile.close()
+    outfile.close()
