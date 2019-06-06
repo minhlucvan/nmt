@@ -49,6 +49,12 @@ parser.add_argument(
     default=sys.stdin,
     help="Input tokenized text file to be processed.")
 parser.add_argument(
+    "outfile",
+    nargs="?",
+    type=argparse.FileType("wb"),
+    default=sys.stdout,
+    help="Input tokenized text file to be processed.")
+parser.add_argument(
     "--delimiter",
     dest="delimiter",
     type=str,
@@ -102,4 +108,7 @@ for word, count in word_with_counts:
     if not args.word_count:
         tpl = "{}"
 
-    print(tpl.format(word, count))
+    args.outfile.write((tpl + '\n').format(word, count).encode('utf-8'))
+
+args.infile.close()
+args.outfile.close()
